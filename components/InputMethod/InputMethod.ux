@@ -4,26 +4,35 @@
       <!-- 圆屏62 -->
       <div if="{{screentype==='circle'}}" style="width: 480px;height: 321px;">
         <!-- 全键盘 -->
+        <!-- 全键盘布局，这块儿的显隐逻辑有点绕，之前用 show 疯狂触发重绘，现在改 if 好多了 -->
         <div if="{{keyboardtype!='T9'}}" style="width: 480px;height: 321px;">
+          <!-- 这个切换到中文数字键盘的按钮，只有在数字输入模式且是中文时才显示 -->
           <img src="./assets/full/back2.png" style="position: absolute;top:38px;left:7px;width:466px;height:52px;" @click="onBtnClick('switchCn')" show="{{numFlag && lang==='cn'}}" />
           <img src="./assets/full/123.png" style="position: absolute;top:266px;left:119px;width:120px;height:48px;" @click="onBtnClick('switchNum')" show="{{downFlag==='' && !numFlag && lang==='cn'}}" />
           <img src="./assets/full/bigA.png" style="position: absolute;top:266px;left:119px;width:120px;height:48px;" @click="onBtnClick('switchLow')" show="{{downFlag==='' && upperFlag && lang==='en'}}" />
           <img src="./assets/full/A.png" style="position: absolute;top:266px;left:119px;width:120px;height:48px;" @click="onBtnClick('switchUpper')" show="{{downFlag==='' && !upperFlag && lang==='en'}}" />
           <div style="position: absolute;top:38px;left:78px;width:324px;height:52px;background-color:rgb(38,38,38);border-radius: 12px;border: 3px solid #333333" show="{{downFlag===''&& !numFlag}}"></div>
-          <img show="{{resultList.length > 0}}" style="position: absolute;top:43px;left:355px;" src="./assets/full/down.png" @click="onBtnClick('down')" />
+          <!-- 这个小箭头，有候选词的时候才出来，点一下展开更多 -->
+          <img if="{{resultList.length > 0 && downFlag===''}}" style="position: absolute;top:43px;left:355px;" src="./assets/full/down.png" @click="onBtnClick('down')" />
+          
           <!-- 带变量的相对路径在 aiot-tookit 2.0.3 中编译出错，已反馈，暂时注释掉 -->
           <!-- <img src="./assets/full/{{lang}}.png" style="position: absolute;top:38px;left:7px;width:67px;height:52px;" @click="onBtnClick('lang')" show="{{downFlag==='' && !numFlag}}" /> -->
           <img src="./assets/full/cn.png" style="position: absolute;top:38px;left:7px;width:67px;height:52px;" @click="onBtnClick('lang')" show="{{downFlag==='' && !numFlag && lang === 'cn'}}" />
           <img src="./assets/full/en.png" style="position: absolute;top:38px;left:7px;width:67px;height:52px;" @click="onBtnClick('lang')" show="{{downFlag==='' && !numFlag && lang === 'en'}}" />
+          <!-- 这个 cval 就是用户输入的拼音或者字母啦 -->
           <div style="position: absolute;top:-4px;left:78px;width:324px;" show="{{downFlag==='' && !numFlag && cval}}">
             <text class="caltext" style="width:296px;"> {{cval}}_ </text>
           </div>
-          <div style="position: absolute;top:38px;left:80px;width:277px" show="{{lang === 'cn'&& !numFlag}}">
+          <!-- 候选词区域，之前用 for 和 show，现在看看直接渲染这些 button 会不会好点 -->
+          <div style="position: absolute;top:38px;left:80px;width:277px" show="{{lang === 'cn'&& !numFlag && downFlag === ''}}">
             <div class="item column center" for="{{cvalList}}">
-              <input show='{{resultList.length > $idx}}' class="calbtn0" type="button" value="{{resultList[$idx]}}" @click="onRsSelect(resultList[$idx])" />
+              <!-- 只显示存在的候选词，避免数组越界或者显示空按钮 -->
+              <input if='{{resultList.length > $idx}}' class="calbtn0" type="button" value="{{resultList[$idx]}}" @click="onRsSelect(resultList[$idx])" />
             </div>
           </div>
+          
           <!-- 这里使用show会导致每次输入都会加载全部候选列表，很卡 -->
+          <!-- 确实，show 只是 display:none，元素还在那儿。改成 if，性能应该能上来一大截！-->
           <list class="list3" if="{{downFlag==='down'}}">
             <list-item type="waitingRows62t9" class="item3" for="{{itemArray in resultList2}}">
               <div class="item column center" style="height:52px;" for="{{item in itemArray}}">
@@ -31,32 +40,34 @@
               </div>
             </list-item>
           </list>
-          <div style="position: absolute;top:95px;left:8px;width:464px;height:52px;" show="{{downFlag===''&&!numFlag}}">
+          <!-- 字母按键区域，这一堆 show="{{downFlag===''&&!numFlag}}" 看着头大，不过还好是互斥的 -->
+          <div style="position: absolute;top:95px;left:8px;width:464px;height:52px;" if="{{downFlag===''&&!numFlag}}">
             <img src="./assets/full/Q.png" style="width:54px;height:52px;margin-right: 4px;" @click="onSelect('Q')" />
             <text class="calbtnfull" for="{{item in keys['full62'][0]}}" @click="onSelect(item)">{{item}}</text>
             <img src="./assets/full/P.png" style="width:54px;height:52px;" @click="onSelect('P')" />
           </div>
-          <div style="position: absolute;top:152px;left:23px;width:438px;height:52px;" show="{{downFlag===''&&!numFlag}}">
+          <div style="position: absolute;top:152px;left:23px;width:438px;height:52px;" if="{{downFlag===''&&!numFlag}}">
             <img src="./assets/full/btA.png" style="width:60px;height:52px;margin-right: 4px;" @click="onSelect('A')" />
             <text class="calbtnfull" for="{{item in keys['full62'][1]}}" @click="onSelect(item)">{{item}}</text>
             <img src="./assets/full/L.png" style="width:60px;height:52px;" @click="onSelect('L')" />
           </div>
-          <div style="position: absolute;top:209px;left:56px;width:368px;height:52px;" show="{{downFlag===''&&!numFlag}}">
+          <div style="position: absolute;top:209px;left:56px;width:368px;height:52px;" if="{{downFlag===''&&!numFlag}}">
             <img src="./assets/full/Z.png" style="width:72px;height:52px;margin-right: 4px;" @click="onSelect('Z')" />
             <text class="calbtnfull" for="{{item in keys['full62'][2]}}" @click="onSelect(item)">{{item}}</text>
             <img src="./assets/full/M.png" style="width:72px;height:52px;" @click="onSelect('M')" />
           </div>
-          <div style="position: absolute;top:95px;left:8px;width:464px;height:52px;" show="{{numFlag}}">
+          <!-- 数字/符号按键区域 -->
+          <div style="position: absolute;top:95px;left:8px;width:464px;height:52px;" if="{{numFlag}}">
             <img src="./assets/full/1.png" style="width:54px;height:52px;margin-right: 4px;" @click="onSelect('1')" />
             <text class="calbtnfull" for="{{item in keys['sign62'][0]}}" @click="onSelect(item)">{{item}}</text>
             <img src="./assets/full/0.png" style="width:54px;height:52px;" @click="onSelect('0')" />
           </div>
-          <div style="position: absolute;top:152px;left:23px;width:438px;height:52px;" show="{{numFlag}}">
+          <div style="position: absolute;top:152px;left:23px;width:438px;height:52px;" if="{{numFlag}}">
             <img src="./assets/full/2-1.png" style="width:60px;height:52px;margin-right: 4px;" @click="onSelect('~')" />
             <text class="calbtnfull" for="{{item in keys['sign62'][1]}}" @click="onSelect(item)">{{item}}</text>
             <img src="./assets/full/2-2.png" style="width:60px;height:52px;" @click="onSelect('?')" />
           </div>
-          <div style="position: absolute;top:209px;left:56px;width:368px;height:52px;" show="{{numFlag}}">
+          <div style="position: absolute;top:209px;left:56px;width:368px;height:52px;" if="{{numFlag}}">
             <img src="./assets/full/3-1.png" style="width:72px;height:52px;margin-right: 4px;" @click="onSelect('(')" />
             <text class="calbtnfull" for="{{item in keys['sign62'][2]}}" @click="onSelect(item)">{{item}}</text>
             <img src="./assets/full/3-2.png" style="width:72px;height:52px;" @click="onSelect('、')" />
@@ -65,16 +76,19 @@
           <img src="./assets/full/space.png" style="position: absolute;top:266px;left:242px;width:120px;height:48px;" @click="onBtnClick('space')" show="{{downFlag==='' && !numFlag }}" />
           <img src="./assets/full/4-2.png" style="position: absolute;top:266px;left:242px;width:120px;height:48px;" @click="onSelect('。')" show="{{numFlag }}" />
           <img src="./assets/full/4-1.png" style="position: absolute;top:266px;left:119px;width:120px;height:48px;" @click="onSelect('，')" show="{{numFlag }}" />
-          <img style="position: absolute;top:204px;left:78px;" src="./assets/full/up.png" @click="onBtnClick('down')" show="{{downFlag==='down'}}" />
+          <!-- 这个向上箭头是收起候选列表的，逻辑和向下箭头对应 -->
+          <img style="position: absolute;top:204px;left:78px;" src="./assets/full/up.png" @click="onBtnClick('down')" if="{{downFlag==='down'}}" />
         </div>
         <!-- 九键 -->
+        <!-- 九宫格键盘，这里的布局和全键盘是对称的，很多逻辑可以复用就好了，可惜UI差不少 -->
         <div else style="width: 480px;height: 321px;">
           <img src="./assets/t9/back2.png" style="position: absolute;top:35px;left:31px;width: 60px;height: 60px;" @click="onBtnClick('switchCn')" show="{{numFlag && lang==='cn'}}" />
           <img src="./assets/t9/123.png" style="position: absolute;top:99px;left:31px;width: 60px;height: 60px;" @click="onBtnClick('switchNum')" show="{{downFlag==='' && !numFlag && lang==='cn'}}" />
           <img src="./assets/t9/bigA.png" style="position: absolute;top:99px;left:31px;width: 60px;height: 60px;" @click="onBtnClick('switchLow')" show="{{downFlag==='' && upperFlag && lang==='en'}}" />
           <img src="./assets/t9/a.png" style="position: absolute;top:99px;left:31px;width: 60px;height: 60px;" @click="onBtnClick('switchUpper')" show="{{downFlag==='' && !upperFlag && lang==='en'}}" />
           <div style="position: absolute;top:35px;left:95px;width:290px;height:60px;background-color:rgb(38,38,38);border-radius: 999px;border: 3px solid #333333" show="{{downFlag===''&& !numFlag}}"></div>
-          <img show="{{resultList.length > 0}}" style="position: absolute;top:44px;left:338px;" src="./assets/full/down.png" @click="onBtnClick('down')" />
+          <img if="{{resultList.length > 0 && downFlag===''}}" style="position: absolute;top:44px;left:338px;" src="./assets/full/down.png" @click="onBtnClick('down')" />
+          
           <!-- 带变量的相对路径在 aiot-tookit 2.0.3 中编译出错，已反馈，暂时注释掉 -->
           <!-- <img src="./assets/t9/{{lang}}.png" style="position: absolute;top:35px;left:31px;width: 60px;height: 60px;" @click="onBtnClick('lang')" show="{{downFlag==='' && !numFlag}}" /> -->
           <img src="./assets/t9/cn.png" style="position: absolute;top:35px;left:31px;width: 60px;height: 60px;" @click="onBtnClick('lang')" show="{{downFlag==='' && !numFlag && lang === 'cn'}}" />
@@ -82,15 +96,18 @@
           <div style="position: absolute;top:-4px;left:95px;width:145px;height:40px;" show="{{downFlag==='' && !numFlag && cval}}">
             <text class="caltext" style="width:145px;"> {{cval}}_ </text>
           </div>
-          <div show="{{downFlag==='' && !numFlag}}" style="position: absolute;top:-4px;left:240px;width:145px;height:40px;justify-content:flex-end">
-            <text for="{{waitingList}}" class="waiting-keys" style="color:{{$idx===waitingIndex ? 'rgb(13,132,255)' : 'white'}};" @click="onSelectWaiting($idx)">{{waitingList[$idx]}}</text>
+          <!-- T9 候选字母，这个 waitingList 的交互还挺有意思的 -->
+          <div show="{{downFlag==='' && !numFlag && waitingList.length > 0}}" style="position: absolute;top:-4px;left:240px;width:145px;height:40px;justify-content:flex-end">
+            <text for="{{item in waitingList}}" class="waiting-keys" style="color:{{$idx===waitingIndex ? 'rgb(13,132,255)' : 'white'}};" @click="onSelectWaiting($idx)">{{item}}</text>
           </div>
-          <div style="position: absolute;top:39px;left:105px;width:233px" show="{{lang === 'cn'&& !numFlag}}">
+          <div style="position: absolute;top:39px;left:105px;width:233px" show="{{lang === 'cn'&& !numFlag && downFlag === ''}}">
             <div class="item column center" for="{{cvalList}}">
-              <input show='{{resultList.length > $idx}}' class="calbtn0" type="button" value="{{resultList[$idx]}}" @click="onRsSelect(resultList[$idx])" />
+              <input if='{{resultList.length > $idx}}' class="calbtn0" type="button" value="{{resultList[$idx]}}" @click="onRsSelect(resultList[$idx])" />
             </div>
           </div>
+          
           <!-- 这里使用show会导致每次输入都会加载全部候选列表，很卡 -->
+          <!-- 同上，改成 if，世界都清净了 (๑•̀ㅂ•́)و✧ -->
           <list class="list3" if="{{downFlag==='down'}}">
             <list-item type="waitingRows62full" class="item3" for="{{itemArray in resultList2}}">
               <div class="item column center" style="height:52px;" for="{{item in itemArray}}">
@@ -98,42 +115,45 @@
               </div>
             </list-item>
           </list>
-          <div style="position: absolute;top:99px;left:95px;width:294px;height:60px;" show="{{downFlag===''&&!numFlag}}">
+          <!-- T9 按键，这里的 item.toUpperCase() 是为了显示大写，实际输入可能是小写 -->
+          <div style="position: absolute;top:99px;left:95px;width:294px;height:60px;" if="{{downFlag===''&&!numFlag}}">
             <text class="calbtnt9" @click="onSelect('select')">选择</text>
             <text class="calbtnt9" for="{{item in keys['t9'][0]}}" @click="onSelect(item)">{{item.toUpperCase()}}</text>
           </div>
-          <div style="position: absolute;top:163px;left:95px;width:294px;height:60px;" show="{{downFlag===''&&!numFlag}}">
+          <div style="position: absolute;top:163px;left:95px;width:294px;height:60px;" if="{{downFlag===''&&!numFlag}}">
             <text class="calbtnt9" for="{{item in keys['t9'][1]}}" @click="onSelect(item)">{{item.toUpperCase()}}</text>
           </div>
-          <div style="position: absolute;top:227px;left:95px;width:294px;height:60px;" show="{{downFlag===''&&!numFlag}}">
+          <div style="position: absolute;top:227px;left:95px;width:294px;height:60px;" if="{{downFlag===''&&!numFlag}}">
             <text class="calbtnt9" for="{{item in keys['t9'][2]}}" @click="onSelect(item)">{{item.toUpperCase()}}</text>
           </div>
-          <div style="position: absolute;top:35px;left:95px;width:294px;height:60px;" show="{{numFlag}}">
+          <!-- T9 数字模式 -->
+          <div style="position: absolute;top:35px;left:95px;width:294px;height:60px;" if="{{numFlag}}">
             <text class="calbtnt9" @click="onSelect('7')">7</text>
             <text class="calbtnt9" @click="onSelect('8')">8</text>
             <text class="calbtnt9" @click="onSelect('9')">9</text>
           </div>
-          <div style="position: absolute;top:99px;left:95px;width:294px;height:60px;" show="{{numFlag}}">
+          <div style="position: absolute;top:99px;left:95px;width:294px;height:60px;" if="{{numFlag}}">
             <text class="calbtnt9" @click="onSelect('4')">4</text>
             <text class="calbtnt9" @click="onSelect('5')">5</text>
             <text class="calbtnt9" @click="onSelect('6')">6</text>
           </div>
-          <div style="position: absolute;top:163px;left:95px;width:294px;height:60px;" show="{{numFlag}}">
+          <div style="position: absolute;top:163px;left:95px;width:294px;height:60px;" if="{{numFlag}}">
             <text class="calbtnt9" @click="onSelect('1')">1</text>
             <text class="calbtnt9" @click="onSelect('2')">2</text>
             <text class="calbtnt9" @click="onSelect('3')">3</text>
           </div>
-          <div style="position: absolute;top:227px;left:95px;width:294px;height:60px;" show="{{numFlag}}">
+          <div style="position: absolute;top:227px;left:95px;width:294px;height:60px;" if="{{numFlag}}">
             <text class="calbtnt9" @click="onSelect('，')">，</text>
             <text class="calbtnt9" @click="onSelect('0')">0</text>
             <text class="calbtnt9" @click="onSelect('。')">。</text>
           </div>
           <img src="./assets/t9/del.png" style="position: absolute;top:35px;left:389px;width: 60px;height: 60px;" @click="onBtnClick('D')" show="{{downFlag==='' }}" />
           <img src="./assets/t9/space.png" style="position: absolute;top:99px;left:389px;width: 60px;height: 60px;" @click="onBtnClick('space')" show="{{downFlag==='' && !numFlag }}" />
-          <img style="position: absolute;top:204px;left:78px;" src="./assets/full/up.png" @click="onBtnClick('down')" show="{{downFlag==='down'}}" />
+          <img style="position: absolute;top:204px;left:78px;" src="./assets/full/up.png" @click="onBtnClick('down')" if="{{downFlag==='down'}}" />
         </div>
       </div>
       <!-- 方屏67 -->
+      <!-- 方屏的布局，用了 scroll-view，这个体验应该会好一些 -->
       <div if="{{screentype==='rect'}}" style="width: {{screenWidthRect}}px;height: 255px;flex-direction: column">
         <div static style="position:absolute;top:-11px;width:{{screenWidthRect}}px;height:276px;justify-content: center">
           <progress percent="{{percent67}}" style="position:absolute;bottom: 15px;width:80px;color:#ffffff;stroke-width:6px;layer-color:#262626"></progress>
@@ -165,16 +185,19 @@
         </div>
         <div style="width: {{screenWidthRect}}px; flex-direction: row; justify-content: center;top:6px">
           <img src="./assets/horizontal/cn.png" style="padding: 6px;width: 60px;height: 60px;" @click="onBtnClick('lang')" if="{{downFlag==='' && !numFlag && lang==='cn'}}" />
-          <div if="{{lang === 'cn' && !numFlag}}" style="margin-left: 6px;width: 60%;height: 60px;background-color:#262626;border-color: #333333; border-width: 3px; border-radius: 100px;flex-direction: row;align-items:center">
-            <scroll id="cvalWaiting" scroll-x="{{true}}" style="position:absolute;width: 85%;height: 42px;">
+          <!-- 这个候选词横向滚动条，希望能丝滑一点 -->
+          <div if="{{lang === 'cn' && !numFlag && downFlag === ''}}" style="margin-left: 6px;width: 60%;height: 60px;background-color:#262626;border-color: #333333; border-width: 3px; border-radius: 100px;flex-direction: row;align-items:center">
+            <scroll id="cvalWaitingRect" scroll-x="{{true}}" style="position:absolute;width: 85%;height: 42px;">
               <div static style="position: absolute;left: 0px;height: 42px;padding-left:20px;padding-right:20px">
+                <!-- 点击这里可以直接把拼音串发出去，有时候挺方便的 -->
                 <text class="calbtn02" style="padding-right:10px" @click="pushCval">{{cval}}</text>
-                <text for="{{cvalList}}" show="{{resultList.length > $idx}}" class="calbtn02" style="padding-right:10px" @click="onRsSelect(resultList[$idx])">{{resultList[$idx]}}</text>
+                <text for="{{item in resultList}}" if="{{resultList.length > $idx && $idx < 5}}" class="calbtn02" style="padding-right:10px" @click="onRsSelect(item)">{{item}}</text>
               </div>
             </scroll>
             <img if="{{resultList.length > 0}}" style="position:absolute;right: 10px; width: 60px;height: 40px;" src="./assets/horizontal/down2.png" @click="onBtnClick('down')" />
           </div>
         
+          
           <!-- 带变量的相对路径在 aiot-tookit 2.0.3 中编译出错，已反馈，暂时注释掉 -->
           <!-- <img src="./assets/horizontal/{{lang}}.png" style="position: absolute;top:6px;left:6px;width: 60px;height: 60px;" @click="onBtnClick('lang')" show="{{downFlag==='' && !numFlag}}" /> -->
           <img src="./assets/horizontal/en.png" style="padding: 6px;width: 60px;height: 60px;" @click="onBtnClick('lang')" if="{{downFlag==='' && !numFlag && lang==='en'}}" />
@@ -185,7 +208,9 @@
           <img if="{{!numFlag}}" src="./assets/horizontal/del.png" style="margin-left: 6px;padding: 6px;width: 60px;height: 60px;" @click="onBtnClick('D')" />
           <img else src="./assets/horizontal/del2.png" style="margin-left: 6px;padding: 6px;" @click="onBtnClick('D')" />
         </div>
+        
         <!-- 这里使用show会导致每次输入都会加载全部候选列表，很卡 -->
+        <!-- 方屏的展开候选列表，同样改成 if，希望能流畅如飞 -->
         <div style="position: absolute;left: 0px;top: 0px;width: {{screenWidthRect}}px;height: 252px;background-color: black; justify-content:center; flex-direction:column; align-items:center" if="{{downFlag==='down'}}">
           <div static class="list67">
             <list static style="width:100%;height:100%;">
@@ -200,6 +225,7 @@
         </div>
       </div>
       <!-- 胶囊屏66 -->
+      <!-- 胶囊屏，这个屏幕形状真是挑战布局啊... (￣▽￣)" -->
       <div if="{{screentype==='pill-shaped'}}" style="width: 192px;height: 305px">
         <div static style="position:absolute;left:0px;top:34px;width:192px;height:276px;">
           <progress percent="{{30+percent66}}" type="arc" style="start-angle:204deg;total-angle:-48deg;width:188px;height:188px;top:82px;left:2px;position:absolute;color:#ffffff;stroke-width:6px;layer-color:#262626"></progress>
@@ -230,13 +256,15 @@
           </scroll>
         </div>
         <img static style="position: absolute;left: 3px;top: 47px;width: 186px;height: 60px;" src="./assets/arc/search.png" />
-        <scroll id="cvalWaiting" scroll-x="{{true}}" style="position: absolute;left: 15px;top: 56px;width: 144px;height: 42px;">
+        <scroll id="cvalWaitingPill" scroll-x="{{true}}" style="position: absolute;left: 15px;top: 56px;width: 144px;height: 42px;">
           <div style="position: absolute;left: 0px;top: 0px;height: 42px;padding-right:20px">
             <text class="calbtn02" style="padding-right:10px" @click="pushCval">{{cval}}</text>
-            <text for="{{cvalList}}" show="{{resultList.length > $idx}}" class="calbtn02" style="padding-right:10px" @click="onRsSelect(resultList[$idx])">{{resultList[$idx]}}</text>
+            <!-- 这里限制最多显示3个候选词，避免太挤 -->
+            <text for="{{item in resultList}}" if="{{resultList.length > $idx && $idx < 3}}" class="calbtn02" style="padding-right:10px" @click="onRsSelect(resultList[$idx])">{{item}}</text>
           </div>
         </scroll>
-        <img show="{{resultList.length > 0}}" style="position: absolute;left: 120px;top: 57px;width: 60px;height: 40px;" src="./assets/arc/down2.png" @click="onBtnClick('down')" />
+        <img if="{{resultList.length > 0 && downFlag === ''}}" style="position: absolute;left: 120px;top: 57px;width: 60px;height: 40px;" src="./assets/arc/down2.png" @click="onBtnClick('down')" />
+        
         <!-- 带变量的相对路径在 aiot-tookit 2.0.3 中编译出错，已反馈，暂时注释掉 -->
         <!-- <img src="./assets/arc/{{lang}}.png" style="position: absolute;top:0px;left:9px;width: 48px;height: 42px;" @click="onBtnClick('lang')" show="{{downFlag==='' && !numFlag}}" /> -->
         <img src="./assets/arc/cn.png" style="position: absolute;top:0px;left:9px;width: 48px;height: 42px;" @click="onBtnClick('lang')" show="{{downFlag==='' && !numFlag && lang==='cn'}}" />
@@ -246,7 +274,9 @@
         <img src="./assets/arc/bigA.png" style="position: absolute;top:0px;left:72px;width:48px;height:42px;" @click="onBtnClick('switchLow')" show="{{downFlag==='' && upperFlag && lang==='en'}}" />
         <img src="./assets/arc/a.png" style="position: absolute;top:0px;left:72px;width:48px;height:42px;" @click="onBtnClick('switchUpper')" show="{{downFlag==='' && !upperFlag && lang==='en'}}" />
         <img src="./assets/arc/del.png" style="position: absolute;left: 135px;top: 0px;width: 48px;height: 42px;" @click="onBtnClick('D')" />
+        
         <!-- 这里使用show会导致每次输入都会加载全部候选列表，很卡 -->
+        <!-- 胶囊屏的展开列表，if大法好！写完这段代码得去喝杯咖啡提提神儿☕ -->
         <div style="position: absolute;left: 0px;top: 47px;width: 192px;height: 263px;background-color: black;" if="{{downFlag==='down'}}">
           <list static class="list66">
             <list-item type="waitingRows66" class="item66" for="{{itemArray in resultList2}}">
@@ -265,57 +295,64 @@
 <script>
 import vibrator from "@system.vibrator";
 import device from '@system.device'
-import { SimpleInputMethod } from "./assets/dicUtil.js";
+import { SimpleInputMethod } from "./assets/dicUtil.js"; // 这个字典工具是核心啊
+
+// 封装一下查字典的逻辑，之前直接用，现在包一层，万一以后要改方便点
 function doSearchDic(word, cb) {
-  let hanzi = SimpleInputMethod.getHanzi(word);
-  if (hanzi && hanzi[0]) {
-    cb(hanzi[0]);
+  // SimpleInputMethod.getHanzi 返回的是一个数组，通常我们用第一个元素，里面是候选词列表
+  let hanziResults = SimpleInputMethod.getHanzi(word);
+  if (hanziResults && hanziResults[0] && hanziResults[0].length > 0) {
+    // 有结果，而且结果数组里有东西
+    cb(hanziResults[0]);
   } else {
+    // 没查到或者返回格式不对，给个空数组，免得外面炸了
     cb([]);
   }
 }
-function deleteLast(t) {
-  if (t) {
-    return t.substr(0, t.length - 1);
+
+// 删除最后一个字符，这个小函数还挺常用的
+function deleteLast(text) {
+  if (text && text.length > 0) {
+    return text.substr(0, text.length - 1);
   }
-  return "";
+  return ""; // 空字符串或者null的话，直接返回空字符串
 }
+
 export default {
   props: {
     hide: {
       default: true,
     },
     keyboardtype: {
-      default: "QWERTY",
+      default: "QWERTY", // 默认全键盘，九宫格得传 'T9'
     },
     maxlength: {
-      default: 5,
+      default: 5, // 这个是影响候选词显示数量的，不是输入框的 maxlength
     },
     vibratemode: {
-      default: "",
+      default: "", // 震动模式，不传就不震动
     },
     screentype: {
-      default: "circle",
+      default: "circle", // 默认圆屏，适配了好几种屏幕类型，rect, pill-shaped
     },
   },
   data: {
-    cval: "",
-    resultList: [],
-    resultList2: [],
-    waitingList: [],
-    waitingIndex: -1,
-    lastWaitingStr: "",
-    downFlag: "",
-    lang: "cn",
-    numFlag: false,
-    upperFlag: false,
-    cvalList: [0, 1, 2, 3, 4],
-    percent67: 52,
-    percent66: 0,
-    // 针对screenShape为rect的设备，会自动获取screenWidth并绑定到根div
-    // 这样便能同时适配n67和o65甚至是后续设备，但实际效果可能受designWidth影响
-    screenWidthRect: 336,
-    keys: {
+    cval: "", // 当前输入的拼音字符串 (连拼的关键)
+    resultList: [], // 候选词列表 (扁平的)
+    resultList2: [], // 二维数组，用于分页或者分行显示候选词
+    waitingList: [], // T9键盘用的，比如按了 '2'，这里可能是 ['a','b','c']
+    waitingIndex: -1, // T9键盘当前选中的字母索引
+    lastWaitingStr: "", // T9键盘上一个按的键值，比如 "abc"
+    downFlag: "", // 控制候选词列表是否展开，'down' 表示展开
+    lang: "cn", // 当前语言, 'cn' or 'en'
+    numFlag: false, // 是否是数字输入模式
+    upperFlag: false, // 英文模式下是否大写
+    cvalList: [0, 1, 2, 3, 4], // 用于循环显示固定数量的候选词，根据 maxlength 初始化
+    percent67: 52, // 方屏键盘滚动百分比
+    percent66: 0, // 胶囊屏键盘滚动百分比
+    screenWidthRect: 336, // 方屏宽度，会自动获取
+    searchDebounceTimer: null, // 查词防抖定时器，提升性能的关键！
+    keys: { // 键盘布局数据，再改需求我就...继续改呗 (╯°□°）╯︵ ┻━┻
       full: [
         ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
         ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
@@ -326,17 +363,17 @@ export default {
         ["~", "!", "@", "#", "%", "“", "”", "*", "?", "/"],
         ["(", ")", "-", "_", ":", ";", "，", "。", "."],
       ],
-      sign62: [
+      sign62: [ // 圆屏62mm的符号键，比通用的少一些
         ["2", "3", "4", "5", "6", "7", "8", "9"],
         ["!", "@", "#", "%", "“", "”", "*"],
         [")", "-", "_", ":", ";"],
       ],
-      full62: [
+      full62: [ // 圆屏62mm的全键盘字母也微调过
         ["W", "E", "R", "T", "Y", "U", "I", "O"],
         ["S", "D", "F", "G", "H", "J", "K"],
         ["X", "C", "V", "B", "N"],
       ],
-      t9: [
+      t9: [ // 九宫格按键定义
         ["abc", "def"],
         ["ghi", "jkl", "mno"],
         ["pqrs", "tuv", "wxyz"],
@@ -344,249 +381,366 @@ export default {
     },
   },
   onInit() {
-    if (this.maxlength) {
-      const tempCvalList = [];
-      for (let i = 0; i < this.maxlength; i++) {
-        tempCvalList.push(i);
-      }
-      this.cvalList = tempCvalList;
-    }
+    // 初始化时根据 maxlength 设置 cvalList，这个是用来显示预览候选词的
+    this.updateCvalListBasedOnMaxlength(this.maxlength);
     if (this.screentype === "rect") {
-      this.adjustScreenWidth();
+      this.adjustScreenWidth(); // 方屏要动态获取下宽度
     }
+    // 监听 props 变化，这种写法还挺方便
     this.$watch("hide", "watchHidePropsChange");
     this.$watch("maxlength", "watchMaxLengthPropsChange");
+    // console.log("输入法组件初始化完成, 当前键盘类型:", this.keyboardtype);
   },
+
+  // 把选中的文字发给父组件
   addAllTxt(txt) {
+    if (typeof txt !== 'string') { // 加个类型检查，万一传错就麻烦了
+        // console.warn("addAllTxt 期望一个字符串参数，但收到了：", typeof txt);
+        return;
+    }
     this.$emit("complete", { content: txt });
-  },
-  onRsSelect(txt) {
-    this.onVibrate();
+    // 重置输入状态，准备下一次输入
     this.cval = "";
-    this.addAllTxt(txt);
-    this.clearWaiting();
-    this.resetReslutList();
-    this.downFlag = "";
+    this.clearWaiting(); // 清除T9的待选状态
+    this.resetReslutList(); // 清空候选词列表
+    this.downFlag = ""; // 如果候选列表是展开的，也收起来
   },
+
+  // 用户从候选列表里选了个词
+  onRsSelect(txt) {
+    this.onVibrate(); // 震一下，给个反馈
+    this.addAllTxt(txt); // 把词送出去，然后重置状态
+    // cval, waitingList, resultList 啥的都会在 addAllTxt 里被清掉
+  },
+
+  // 处理各种功能按钮点击，比如删除、中英文切换等
   onBtnClick(sign) {
     this.onVibrate();
+    // console.log("按钮点击:", sign, "当前cval:", this.cval, "T9状态:", this.lastWaitingStr);
     switch (sign) {
-      case "AC":
+      case "AC": // 清空所有，这个好像没用到？先留着吧
         this.cval = "";
         this.clearWaiting();
         this.resetReslutList();
         break;
-      case "lang":
-        if (this.lang === "cn") {
-          this.lang = "en";
-        } else {
-          this.lang = "cn";
-        }
-        this.cval = "";
+      case "lang": // 中英文切换
+        this.lang = this.lang === "cn" ? "en" : "cn";
+        this.cval = ""; // 切换语言后，清空已输入的拼音
         this.clearWaiting();
         this.resetReslutList();
+        // console.log("语言切换到:", this.lang);
         break;
-      case "D":
-        if (this.waitingIndex >= 0) {
+      case "D": // 删除键，这个逻辑比较多
+        if (this.waitingIndex >= 0) { // 如果是T9待选状态，先清除待选
           this.clearWaiting();
+          // 清除T9待选后，需要根据当前的 cval 重新获取候选 (如果cval不为空)
           this.resetReslutList();
-        } else if (this.cval.length > 0) {
-          this.cval = deleteLast(this.cval);
+        } else if (this.cval.length > 0) { // 如果有已输入的拼音 (cval)
+          this.cval = deleteLast(this.cval); // 删除最后一个拼音字母
+          // cval 变了，候选词也得跟着变 (连拼的关键)
           this.resetReslutList();
-        } else {
+        } else { // T9和cval都空了，那就是真删除了，通知父组件
           this.$emit("delete", {});
         }
         break;
-      case "space":
+      case "space": // 空格键
         this.addAllTxt(" ");
         break;
-      case "down":
+      case "down": // 展开/收起候选列表
         this.downFlag = this.downFlag === "down" ? "" : "down";
         break;
-      case "select":
-        if (this.lastWaitingStr != sign && this.lastWaitingStr) {
+      case "select": // T9键盘的“选择”键，或者叫“确认”键
+        // 这个 select 是 T9 模式下，把当前高亮的字母（waitingList[waitingIndex]）上屏
+        // 必须得有 T9 候选字母才行
+        if (this.lastWaitingStr && this.waitingList.length > 0 && this.waitingIndex !== -1) {
           if (this.lang === "cn") {
+            // 中文模式下，是把选中的字母加到 cval 后面，形成完整拼音
             this.cval += this.waitingList[this.waitingIndex];
           } else {
-            if (this.upperFlag) {
-              this.addAllTxt(this.waitingList[this.waitingIndex].toUpperCase());
-            } else {
-              this.addAllTxt(this.waitingList[this.waitingIndex].toLowerCase());
-            }
+            // 英文模式下，直接上屏这个字母
+            const charToCommit = this.upperFlag ? this.waitingList[this.waitingIndex].toUpperCase() : this.waitingList[this.waitingIndex].toLowerCase();
+            this.addAllTxt(charToCommit); // addAllTxt 会清空 cval 和 T9 状态
           }
-          this.clearWaiting();
-          this.resetReslutList();
+          this.clearWaiting(); // 清除T9的待选状态
+          this.resetReslutList(); // 更新候选词 (主要针对中文模式)
         }
         break;
-      case "switchNum":
+      case "switchNum": // 切换到数字/符号键盘
         this.numFlag = true;
-        this.cval = "";
+        this.cval = ""; // 模式切换，清空当前输入
         this.clearWaiting();
         this.resetReslutList();
         break;
-      case "switchCn":
+      case "switchCn": // 从数字/符号切回中文/英文主键盘
         this.numFlag = false;
+        // 这里不清空 cval，因为可能是从符号输一半回来的
         break;
-      case "switchUpper":
+      case "switchUpper": // 切换到大写
         this.upperFlag = true;
         break;
-      case "switchLow":
+      case "switchLow": // 切换到小写
         this.upperFlag = false;
         break;
-      default:
-        if (sign.length === 1) {
-          this.addAllTxt(sign);
-        } else {
-          if (this.waitingIndex >= 0) {
-            if (this.lastWaitingStr === sign) {
-              this.waitingIndex++;
-              if (this.waitingIndex >= this.lastWaitingStr.length) {
-                this.waitingIndex = 0;
-              }
-            } else {
-              if (this.lang === "cn") {
-                this.cval += this.waitingList[this.waitingIndex];
-              } else {
-                if (this.upperFlag) {
-                  this.addAllTxt(
-                    this.waitingList[this.waitingIndex].toUpperCase(),
-                  );
-                } else {
-                  this.addAllTxt(
-                    this.waitingList[this.waitingIndex].toLowerCase(),
-                  );
-                }
-              }
-              this.lastWaitingStr = sign;
-              this.waitingIndex = 0;
-              this.waitingList = sign.split("");
-            }
-          } else {
-            this.lastWaitingStr = sign;
-            this.waitingIndex = 0;
-            this.waitingList = sign.split("");
-          }
-          this.resetReslutList();
+      default: // 这个 default 主要是处理 T9 键盘的按键，比如 "abc", "def"
+        // 全键盘的字母输入不走这里，走 onSelect
+        if (this.keyboardtype === 'T9' && typeof sign === 'string' && sign.length > 1) { // 确保是T9的多字符按键
+            this.handleT9KeyPress(sign);
+        } else if (sign.length === 1) { // 单字符直接上屏 (比如某些符号按钮)
+            this.addAllTxt(sign);
         }
+        // 其他未处理的 sign 暂时忽略，避免出问题
         break;
     }
   },
+
+  // 处理T9按键的核心逻辑 (从 onBtnClick 拆分出来，清晰一点)
+  handleT9KeyPress(sign) {
+    // sign 是类似 "abc", "def" 这样的字符串
+    if (this.waitingIndex >= 0) { // 如果已经在T9选择序列中
+      if (this.lastWaitingStr === sign) { // 重复按了同一个T9键，就循环选择字母
+        this.waitingIndex++;
+        if (this.waitingIndex >= this.lastWaitingStr.length) {
+          this.waitingIndex = 0; // 回到第一个字母
+        }
+      } else { // 按了不同的T9键，说明之前的字母要“确认”了
+        if (this.lang === "cn") {
+          // 中文模式，把之前选的字母加到 cval，然后开始新的T9选择序列
+          this.cval += this.waitingList[this.waitingIndex];
+        } else {
+          // 英文模式，直接把之前选的字母上屏
+          const charToCommit = this.upperFlag ? this.waitingList[this.waitingIndex].toUpperCase() : this.waitingList[this.waitingIndex].toLowerCase();
+          this.addAllTxt(charToCommit); // 这个会清空 cval 和 T9 状态，所以下面直接开始新的 T9 序列
+          // 如果 addAllTxt 清空了 cval，英文T9的连打体验会有点怪，先这样，后续看产品怎么说
+        }
+        // 开始新的T9选择序列
+        this.lastWaitingStr = sign;
+        this.waitingList = sign.split("");
+        this.waitingIndex = 0;
+      }
+    } else { // 不在T9选择序列中，说明是新开始的
+      this.lastWaitingStr = sign;
+      this.waitingList = sign.split("");
+      this.waitingIndex = 0;
+    }
+    // 每次T9按键后，都要更新候选词列表 (基于 cval + 当前T9高亮字母)
+    this.resetReslutList();
+  },
+
+  // 清空T9的待选状态
   clearWaiting() {
     this.waitingList = [];
     this.waitingIndex = -1;
     this.lastWaitingStr = "";
   },
+
+  // 重新获取候选词列表 (核心函数之一)
   resetReslutList() {
-    if (this.screentype != "circle") {
-      this.$element("cvalWaiting").scrollTo({
-        top: 0,
-        left: 0,
-        behavior: "smooth",
-      });
+    // 方屏和胶囊屏，如果候选词输入区有滚动条，让它滚回去
+    if (this.screentype === "rect" && this.$element("cvalWaitingRect")) {
+      this.$element("cvalWaitingRect").scrollTo({ x: 0 });
+    } else if (this.screentype === "pill-shaped" && this.$element("cvalWaitingPill")) {
+      this.$element("cvalWaitingPill").scrollTo({ x: 0 });
     }
-    let watingStr = "";
-    if (this.lastWaitingStr && this.lastWaitingStr[this.waitingIndex]) {
-      watingStr = this.lastWaitingStr[this.waitingIndex];
+
+    let currentT9Char = ""; // 当前T9高亮的字符
+    if (this.keyboardtype === 'T9' && this.lastWaitingStr && this.waitingList.length > 0 && this.waitingIndex !== -1) {
+      currentT9Char = this.waitingList[this.waitingIndex];
     }
-    if (!(this.cval + watingStr) || this.lang != "cn") {
+
+    const pinyinToSearch = this.cval + currentT9Char;
+
+    // 如果不是中文模式，或者要搜索的拼音为空，就没必要查了，直接清空候选词
+    if (this.lang !== "cn") {
       this.resultList = [];
-      this.setResultListAll();
+      this.setResultListAll(); // 更新二维数组
       return;
     }
-    this.getResultByWord(this.cval + watingStr);
+    
+    // 如果拼音为空，也清空候选词 (避免无效搜索，也算一种优化)
+    // 这个判断移到 getResultByWord 的防抖逻辑里更合适一点，这里先简单处理
+    if (!pinyinToSearch) {
+        this.resultList = [];
+        this.setResultListAll();
+        return;
+    }
+
+    this.getResultByWord(pinyinToSearch); // 去查字典
   },
+
+  // 把一维的 resultList 转成二维的 resultList2，方便模板里按行显示
   setResultListAll() {
     this.resultList2 = [];
-    let array = [];
-    for (let i = 0; i < this.resultList.length; i++) {
-      array.push(this.resultList[i]);
-      if (array.length === parseInt(this.maxlength)) {
-        this.resultList2.push(array);
-        array = [];
-      }
+    let tempArray = [];
+    const itemsPerRow = parseInt(this.maxlength) || 5; // 每行显示几个，从maxlength取，默认5个
+    if (this.resultList && this.resultList.length > 0) {
+        for (let i = 0; i < this.resultList.length; i++) {
+            tempArray.push(this.resultList[i]);
+            if (tempArray.length === itemsPerRow) {
+                this.resultList2.push(tempArray);
+                tempArray = []; // 清空，准备下一行
+            }
+        }
     }
-    if (array.length > 0 && array.length < parseInt(this.maxlength)) {
-      this.resultList2.push(array);
+    if (tempArray.length > 0) { // 最后可能剩几个不够一行，也加上
+      this.resultList2.push(tempArray);
     }
+    // console.log("候选词已格式化:", this.resultList2.length, "行");
   },
+
+  // 根据拼音获取候选汉字 (带防抖)
   getResultByWord(val) {
-    const that = this;
-    doSearchDic(val, function (data) {
-      that.resultList = data;
-      that.setResultListAll();
-    });
-  },
-  onSelect(num) {
-    this.$emit("keyDown", { content: num });
-    if (this.keyboardtype === "T9" && this.screentype === "circle") {
-      this.onBtnClick(num);
+    // 清除上一次的定时器，实现防抖
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+
+    // 如果搜索词为空 (val 可能已经是 cval + T9Char 了)，直接清空结果，不发起搜索
+    // 这个检查主要针对中文模式，因为英文模式不通过这里获取“候选”
+    if (!val && this.lang === 'cn') {
+      this.resultList = [];
+      this.setResultListAll();
+      // console.log("搜索词为空，清空候选列表");
       return;
     }
-    this.onVibrate();
-    if (this.lang === "cn" && !this.numFlag) {
-      this.cval += num.toLowerCase();
-    } else if (this.lang === "en" && !this.numFlag) {
-      if (this.upperFlag) {
-        this.addAllTxt(num.toUpperCase());
-      } else {
-        this.addAllTxt(num.toLowerCase());
-      }
-    } else {
-      this.addAllTxt(num);
+    
+    // 设置新的定时器，延迟执行搜索
+    // 这个延迟时间得好好调调，100ms-200ms 应该差不多，看实际效果
+    this.searchDebounceTimer = setTimeout(() => {
+      // console.log("开始查词:", val);
+      // 这里用箭头函数，this 指向正确，就不需要 const that = this; 了
+      doSearchDic(val, (data) => {
+        // 收到词典结果，更新数据
+        // 再次确认下当前搜索词是否还是val，避免异步返回时用户已经输入了新的内容 (简单场景下一般没事)
+        // 不过，由于防抖机制，快速输入时旧的搜索会被取消，这个问题不大
+        this.resultList = data;
+        this.setResultListAll(); // 更新二维数组用于显示
+        // console.log("查词结束, 候选词数量:", data.length);
+      });
+    }, 150); // 防抖延迟150毫秒，感觉这个值比较合适，不会太慢也不会太频繁
+  },
+
+  // 处理字符按键的点击 (全键盘的字母、数字、符号，以及T9的数字模式)
+  onSelect(inputChar) {
+    this.$emit("keyDown", { content: inputChar }); // 先通知父组件按了啥键
+    // console.log("按键选择:", inputChar, "当前语言:", this.lang, "数字模式:", this.numFlag, "T9模式:", this.keyboardtype === 'T9');
+
+    // 如果是T9键盘，并且当前不是数字模式，那按键代表的是字母组合 (比如 "abc")
+    // 这种情况应该由 onBtnClick -> handleT9KeyPress 处理，这里拦截一下避免混淆
+    if (this.keyboardtype === "T9" && !this.numFlag && inputChar.length > 1) {
+        this.handleT9KeyPress(inputChar);
+        return;
     }
-    this.resetReslutList();
-  },
-  onSelectWaiting(num) {
-    this.onVibrate();
-    if (this.lang === "cn") {
-      this.cval += this.waitingList[num].toString();
-    } else {
-      if (this.upperFlag) {
-        this.addAllTxt(this.waitingList[num].toUpperCase());
-      } else {
-        this.addAllTxt(this.waitingList[num].toLowerCase());
-      }
+    
+    this.onVibrate(); // 震动反馈
+
+    if (this.lang === "cn" && !this.numFlag) { // 中文拼音输入模式
+      this.cval += inputChar.toLowerCase(); // 拼音总是小写
+      this.resetReslutList(); // 更新候选词 (连拼的核心)
+    } else if (this.lang === "en" && !this.numFlag) { // 英文输入模式
+      const charToCommit = this.upperFlag ? inputChar.toUpperCase() : inputChar.toLowerCase();
+      this.addAllTxt(charToCommit); // 英文直接上屏
+    } else { // 数字或符号模式 (numFlag is true, or lang is 'en' and numFlag is true)
+      this.addAllTxt(inputChar); // 数字/符号直接上屏
     }
-    this.clearWaiting();
-    this.resetReslutList();
   },
-  watchHidePropsChange(newV, oldV) {
-    this.$emit("visibilityChange", { visible: newV });
+
+  // T9模式下，点击候选字母区域的某个字母
+  onSelectWaiting(index) {
+    this.onVibrate();
+    if (this.waitingList.length > index && index >= 0) {
+      const selectedChar = this.waitingList[index];
+      if (this.lang === "cn") {
+        this.cval += selectedChar; // 把选中的字母加到拼音串
+      } else { // 英文模式
+        const charToCommit = this.upperFlag ? selectedChar.toUpperCase() : selectedChar.toLowerCase();
+        this.addAllTxt(charToCommit);
+      }
+      this.clearWaiting(); // 清除T9待选状态
+      this.resetReslutList(); // 更新候选词
+    }
   },
-  watchMaxLengthPropsChange(newV, oldV) {
-    if (newV) {
+
+  // 监听 hide prop 的变化
+  watchHidePropsChange(newVal, oldVal) {
+    this.$emit("visibilityChange", { visible: !newVal }); // hide 是 true 代表不可见
+    // console.log("输入法可见性改变为:", !newVal);
+  },
+  
+  // 监听 maxlength prop 的变化
+  watchMaxLengthPropsChange(newVal, oldVal) {
+    this.updateCvalListBasedOnMaxlength(newVal);
+  },
+
+  updateCvalListBasedOnMaxlength(maxLength) {
+    if (maxLength && !isNaN(parseInt(maxLength)) && parseInt(maxLength) > 0) {
       const tempCvalList = [];
-      for (let i = 0; i < newV; i++) {
+      for (let i = 0; i < parseInt(maxLength); i++) {
         tempCvalList.push(i);
       }
       this.cvalList = tempCvalList;
+    } else {
+      this.cvalList = [0,1,2,3,4]; // 默认值或无效值处理
     }
   },
+
+  // 震动反馈，这个小细节用户体验还挺重要
   onVibrate() {
-    if (this.vibratemode != "") {
-      vibrator.vibrate({ mode: this.vibratemode });
+    if (this.vibratemode && typeof vibrator.vibrate === 'function') { // 加个判断，万一平台不支持呢
+      try {
+        vibrator.vibrate({ mode: this.vibratemode });
+      } catch (e) {
+        // console.error("震动失败:", e); // 有时候模拟器或者某些设备会报错，捕获一下
+      }
     }
   },
+
+  // 处理横向键盘的滚动，更新进度条 (方屏和胶囊屏用)
   handelScroll(event) {
-    let percentTemp67 = (event.scrollX / 636) * 100 + 52.8;
-    this.percent67 = parseInt(percentTemp67 <= 100 ? percentTemp67 : 100);
-    let percentTemp66 = (event.scrollX / 633) * 100;
-    this.percent66 = parseInt(percentTemp66 <= 100 ? percentTemp66 : 100);
+    if (!event || typeof event.scrollX !== 'number') return; // 基本的参数校验
+
+    // 这里的 636 和 633 可能是根据键盘总宽度算出来的，得注意别写死魔法数字
+    // 最好是通过 $element().getBoundingClientRect() 之类的动态获取，或者作为已知参数传入
+    // 不过现在先这样，回头再优化 (经典台词)
+    if (this.screentype === 'rect') {
+        let percentTemp67 = (event.scrollX / 636) * 100 + 52.8; // 这个 52.8 是初始偏移？
+        this.percent67 = parseInt(Math.min(100, Math.max(0, percentTemp67))); // 确保在0-100之间
+    } else if (this.screentype === 'pill-shaped') {
+        let percentTemp66 = (event.scrollX / 633) * 100;
+        this.percent66 = parseInt(Math.min(100, Math.max(0, percentTemp66)));
+    }
   },
+
+  // 点击已输入的拼音串 (cval) 时，直接把拼音串作为结果提交
   pushCval() {
     this.onVibrate();
-    let temp = this.cval;
-    this.cval = "";
-    this.clearWaiting();
-    this.resetReslutList();
-    this.addAllTxt(temp);
+    if (this.cval.length > 0) {
+      const tempCval = this.cval;
+      // this.cval = ""; // addAllTxt 会清空 cval
+      // this.clearWaiting();
+      // this.resetReslutList();
+      this.addAllTxt(tempCval); // 用 addAllTxt 来统一处理上屏和状态重置
+    }
   },
+
+  // 动态调整方屏的宽度，适配不同设备
   adjustScreenWidth(){
-    device.getInfo({
-      success: (data) => {
-        this.screenWidthRect = data.screenWidth;
-      }
-    })
+    try {
+        device.getInfo({
+            success: (data) => {
+                if (data && data.screenWidth) {
+                    this.screenWidthRect = data.screenWidth;
+                    // console.log("方屏宽度已调整为:", data.screenWidth);
+                } else {
+                    // console.warn("获取设备信息成功，但screenWidth无效:", data);
+                }
+            },
+            fail: (data, code) => {
+                // console.error("获取设备信息失败: code -", code, data);
+            }
+        });
+    } catch (e) {
+        // console.error("adjustScreenWidth 发生异常:", e);
+    }
   }
 };
 </script>
@@ -605,10 +759,10 @@ export default {
 .calbtn0 {
 	color:#fff;
 	font-size:28px;
-	background-color:rgba(38,38,38,0);
-	border-radius:0;
+	background-color:rgba(38,38,38,0); /* 透明背景，依赖父容器 */
+	border-radius:0; /* 直角按钮 */
 	height:52px;
-	width:52px;
+	width:52px; /* 这个宽度可能需要根据maxlength动态调整？目前是固定的 */
 	text-align:center
 }
 .calbtn02 {
@@ -624,19 +778,19 @@ export default {
 	font-size:24px;
 	font-weight:bold;
 	background-color:#262626;
-	border-radius:12px;
+	border-radius:12px; /* 圆角比之前大方点 */
 	margin-right:4px;
 	height:52px;
 	width:40px;
 	text-align:center;
-	border:3px solid rgba(255,255,255,0.06)
+	border:3px solid rgba(255,255,255,0.06) /* 边框颜色淡一点，不那么突兀 */
 }
 .calbtnt9 {
 	color:#fff;
 	font-size:25px;
 	font-weight:bold;
 	background-color:#262626;
-	border-radius:999px;
+	border-radius:999px; /* 超大圆角，接近圆形 */
 	margin-right:4px;
 	width:94px;
 	height:60px;
@@ -645,31 +799,31 @@ export default {
 }
 .caltext {
 	text-align:left;
-	line-height:38px;
+	line-height:38px; /* 确保文字垂直居中一点 */
 	lines:1;
-	text-overflow:ellipsis;
-	color:#0d84ff;
+	text-overflow:ellipsis; /* 超出部分显示省略号 */
+	color:#0d84ff; /* 醒目的蓝色 */
 	height:45px;
 	font-size:28px;
-	text-align:left;
+	text-align:left; /* 确保是左对齐 */
 	font-weight:bold;
 	padding-left:8px
 }
-.list3 {
+.list3 { /* 圆屏展开的候选列表 */
 	position:absolute;
 	top:38px;
 	left:78px;
 	width:324px;
-	height:160px;
+	height:160px; /* 这个高度可能需要根据候选词数量动态调整？或者固定显示几行 */
 	flex-direction:column;
-	background-color:#262626;
+	background-color:#262626; /* 深色背景 */
 	border-radius:12px
 }
-.item3 {
+.item3 { /* 圆屏候选列表的每一行 */
 	width:324px;
 	height:52px
 }
-.calbtn67 {
+.calbtn67 { /* 方屏按键样式 */
 	color:rgb(255,255,255);
 	font-size:32px;
 	font-weight:bold;
@@ -677,65 +831,73 @@ export default {
 	margin-right:4px;
 	width:60px;
 	height:60px;
-	border-radius:30px;
+	border-radius:30px; /* 半圆角 */
 	text-align:center;
 	border:3px solid rgba(255,255,255,0.06);
 }
-#keyboard67 {
+#keyboard67 { /* 方屏键盘滚动区域 */
+	position:absolute;
+	left:0px;
+	top:82px; /* 这个位置是精心计算过的吧 */
+	/* width:336px;  宽度由 screenWidthRect 动态绑定 */
+	height:170px;
+}
+#keyboard66 { /* 胶囊屏键盘滚动区域 */
 	position:absolute;
 	left:0px;
 	top:82px;
-	width:336px;
+	width:192px; /* 胶囊屏宽度比较固定 */
 	height:170px;
 }
-#keyboard66 {
-	position:absolute;
-	left:0px;
-	top:82px;
-	width:192px;
-	height:170px;
-}
-.list67 {
-	top:0px;
-	width:96.4%;
+.list67 { /* 方屏展开的候选列表容器 */
+	top:0px; /* 这个 top:0px 是相对于父容器的 */
+	width:96.4%; /* 用百分比，稍微灵活点 */
 	height:170px;
 	border-radius:30px;
 	background-color:#262626;
 	border:3px solid rgba(255,255,255,0.06);
-	padding:0px 10px;
+	padding:0px 10px; /* 内边距，让内容不贴边 */
 }
-.item67 {
-	height:50px;
+.item67 { /* 方屏候选列表的每一行 */
+	height:50px; /* 比圆屏的矮一点点 */
 }
-.calbtn66 {
+.calbtn66 { /* 胶囊屏按键样式 */
 	color:rgb(255,255,255);
 	font-size:32px;
 	font-weight:bold;
 	background-color:rgb(38,38,38);
-	margin-right:3px;
+	margin-right:3px; /* 间距小一点，因为屏幕窄 */
 	width:60px;
 	height:60px;
 	border-radius:30px;
 	text-align:center;
 	border:3px solid rgba(255,255,255,0.06);
 }
-.list66 {
+.list66 { /* 胶囊屏展开的候选列表容器 */
 	position:absolute;
 	left:3px;
 	top:0px;
 	width:186px;
-	height:186px;
+	height:186px; /* 正方形的？ */
 	border-radius:30px;
 	background-color:#262626;
 	border:3px solid rgba(255,255,255,0.06);
-	padding:10px
+	padding:10px /* 四周都有内边距 */
 }
-.item66 {
-	height:42px;
+.item66 { /* 胶囊屏候选列表的每一行 */
+	height:42px; /* 更矮了，空间真是寸土寸金 */
 }
-.waiting-keys {
-	width:36px;
+.waiting-keys { /* T9 候选字母的样式 */
+	width:36px; /* 固定宽度，能放下单个字母 */
 	height:40px;
 	text-align: center;
+	/* color 由内联style动态绑定了 */
+    line-height: 40px; /* 垂直居中 */
+    font-size: 24px; /* 稍微小一点 */
+}
+/* 确保 scroll-view 里的内容能横向排列 */
+#cvalWaitingRect > div, #cvalWaitingPill > div {
+    flex-direction: row; /* 很重要，不然里面的 text 会纵向排列 */
+    align-items: center; /* 垂直居中对齐 */
 }
 </style>
